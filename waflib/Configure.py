@@ -594,7 +594,8 @@ def run_build(self, *k, **kw):
 			proj['cache_run_build'] = ret
 			proj.store(os.path.join(dir, 'cache_run_build'))
 		else:
-			shutil.rmtree(dir)
+			# Ignore errors. Windows will sometimes not allow the directory to be deleted
+			shutil.rmtree(dir, ignore_errors=True)
 	return ret
 
 @conf
