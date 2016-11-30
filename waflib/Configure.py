@@ -594,8 +594,26 @@ def run_build(self, *k, **kw):
 			proj['cache_run_build'] = ret
 			proj.store(os.path.join(dir, 'cache_run_build'))
 		else:
-			# Ignore errors. Windows will sometimes not allow the directory to be deleted
-			shutil.rmtree(dir, ignore_errors=True)
+			def handle_error(fun, path, exc):
+				# Try the operation a few more times after sleeping to allow
+				# other processes to close open handles that might be
+				# preventing the delete from succeeding. This happens
+				# frequently on Windows due to the Application Experience
+				# Lookup Service
+				tries = 0
+
+				while True:
+					time.sleep(0.01)
+					try:
+						fun(path)
+					except:
+						if tries >= 100:
+							raise
+						tries += 1
+					else:
+						break
+
+			shutil.rmtree(dir, onerror=handle_error)
 	return ret
 
 @conf
